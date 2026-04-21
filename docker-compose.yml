@@ -1,0 +1,71 @@
+services:
+  mysql:
+    image: mysql:latest
+    volumes:
+      - ./mysql/:/var/lib/mysql:rw
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: proxy
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    networks:
+      main:
+        ipv4_address: 172.16.0.2
+  proxy:
+    network_mode: host
+    depends_on:
+      api:
+        condition: service_healthy
+    build: 
+      dockerfile: Dockerfile
+      context: proxy
+    environment:
+      INTERNAL_HOST: ":19132"
+      EXTERNAL_HOST: "172.16.0.4:19132"
+      API_ENDPOINT: "http://127.0.0.1:3000"
+  api:
+    depends_on:
+      mysql:
+        condition: service_healthy
+    build:
+      dockerfile: Dockerfile
+      context: api
+    ports:
+      - 3000:3000/tcp
+    networks:
+      main:
+        ipv4_address: 172.16.0.3
+    environment:
+      API_TOKEN: "CHANGE ME"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:3000/status || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 1s
+  server:
+    build:
+      dockerfile: Dockerfile
+      context: images/server
+      args:
+        SERVER_LINK: "https://www.minecraft.net/bedrockdedicatedserver/bin-linux/bedrock-server-1.26.14.1.zip"
+    networks:
+      main:
+        ipv4_address: 172.16.0.4
+    volumes:
+      - ./images/server/resources/worlds/:/app/worlds/:rw
+      - ./images/server/resources/server.properties:/app/server.properties:ro
+
+networks:
+  main:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.0.0/24
+          gateway: 172.16.0.1

@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "start": "docker compose build && docker compose up",
+    "stop": "docker compose down --rmi local",
+    "build": "docker compose build --no-cache",
+    "build-cache": "docker compose build",
+    "shell": "docker compose exec mysql mysql -u root -proot proxy",
+    "logs": "docker compose logs -f"
+  }
+}
