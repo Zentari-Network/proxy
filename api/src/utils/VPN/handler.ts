@@ -27,14 +27,22 @@ export default abstract class VPNHandler {
     const vpn = Object.values(body.security).some((value) => value);
 
     await DatabaseHandler.Query(
-      "INSERT INTO vpns (ip, vpn) VALUES (?, ?)",
+      "INSERT INTO vpns (ip, vpn, asn, aso, city, region) VALUES (?, ?, ?, ?, ?, ?)",
       ip,
       vpn,
+      body.network.autonomous_system_number,
+      body.network.autonomous_system_organization,
+      body.location.city,
+      body.location.region,
     );
 
     return {
       ip,
       vpn,
+      asn: body.network.autonomous_system_number,
+      aso: body.network.autonomous_system_organization,
+      city: body.location.city,
+      region: body.location.region,
       whitelisted: false,
       created_at: new Date().toISOString(),
     };

@@ -1,6 +1,10 @@
 export interface VPN {
   ip: string;
   vpn: boolean;
+  asn: string;
+  aso: string;
+  city: string;
+  region: string;
   whitelisted: boolean;
   created_at: string;
 }

@@ -7,6 +7,10 @@ const DatabaseConstants = {
       columns: [
         "ip VARCHAR(15) NOT NULL PRIMARY KEY",
         "vpn BOOLEAN NOT NULL",
+        "asn VARCHAR(64) NOT NULL",
+        "aso VARCHAR(64) NOT NULL",
+        "city VARCHAR(64) NOT NULL",
+        "region VARCHAR(64) NOT NULL",
         "whitelisted BOOLEAN DEFAULT false NOT NULL",
         "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL",
 
