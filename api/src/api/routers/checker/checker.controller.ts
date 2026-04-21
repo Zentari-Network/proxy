@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import DatabaseConstants from "../../../utils/database/constants";
 import DatabaseHandler from "../../../utils/database/handler";
 import DatabaseUtils from "../../../utils/database/utils";
 import Sleep from "../../../utils/sleep";
@@ -64,6 +65,13 @@ export default abstract class CheckerController {
       if (vpn?.vpn && !vpn?.whitelisted) {
         response.allowed = false;
         response.message = "VPN detected.";
+
+        res.json(response);
+        return;
+      }
+      if (DatabaseConstants.BannedASNs.includes(vpn!.asn)) {
+        response.allowed = false;
+        response.message = "Banned ASN.";
 
         res.json(response);
         return;

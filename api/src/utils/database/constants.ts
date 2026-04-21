@@ -31,6 +31,7 @@ const DatabaseConstants = {
       ],
     },
   ] as Table[],
+  BannedASNs: [] as string[], // Use this is someone is just rotating they're IP to get around alt detection.
 };
 
 export default DatabaseConstants;
