@@ -7,7 +7,9 @@ import (
 )
 
 type CheckRequest struct {
-	IP string `json:"ip"`
+	IP       string `json:"ip"`
+	Username string `json:"username"`
+	XUID     string `json:"xuid"`
 }
 
 type CheckResponse struct {

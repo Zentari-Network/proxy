@@ -44,32 +44,34 @@ func (p *Proxy) Start() {
 	}
 }
 func (p *Proxy) HandleConnection(conn *minecraft.Conn) {
-	fmt.Printf("Incoming connection: %v\n", conn.ClientData().ThirdPartyName)
+	fmt.Printf("Incoming connection: %v\n", conn.IdentityData().DisplayName)
 
 	if !p.PacksDownloaded {
-		fmt.Printf("%v was disconnected: RPs are still being downloaded.\n", conn.ClientData().ThirdPartyName)
+		fmt.Printf("%v was disconnected: RPs are still being downloaded.\n", conn.IdentityData().DisplayName)
 
 		p.Listener.Disconnect(conn, "Proxy is still downloading resource packs! Try joining again soon.")
 		return
 	}
 
 	check, err := p.API.Check(api.CheckRequest{
-		IP: strings.Split(conn.RemoteAddr().String(), ":")[0],
+		IP:       strings.Split(conn.RemoteAddr().String(), ":")[0],
+		Username: conn.IdentityData().DisplayName,
+		XUID:     conn.IdentityData().XUID,
 	})
 
 	if err != nil {
-		fmt.Println(fmt.Sprintf("Failed to check %v:", conn.ClientData().ThirdPartyName), err)
+		fmt.Println(fmt.Sprintf("Failed to check %v:", conn.IdentityData().DisplayName), err)
 
 		p.Listener.Disconnect(conn, "API failed to check you!")
 		return
 	}
 	if !check.Allowed {
-		fmt.Printf("%v was disconnected: %v\n", conn.ClientData().ThirdPartyName, check.Message)
+		fmt.Printf("%v was disconnected: %v\n", conn.IdentityData().DisplayName, check.Message)
 
 		p.Listener.Disconnect(conn, check.Message)
 		return
 	} else {
-		fmt.Printf("%v passed checks!\n", conn.ClientData().ThirdPartyName)
+		fmt.Printf("%v passed checks!\n", conn.IdentityData().DisplayName)
 	}
 
 	identityData := conn.IdentityData()
@@ -86,7 +88,7 @@ func (p *Proxy) HandleConnection(conn *minecraft.Conn) {
 	}.Dial("raknet", p.Config.ExternalHost)
 
 	if err != nil {
-		fmt.Printf("%v was disconnected: %v\n", conn.ClientData().ThirdPartyName, err)
+		fmt.Printf("%v was disconnected: %v\n", conn.IdentityData().DisplayName, err)
 
 		p.Listener.Disconnect(conn, "Failed to connect to server!")
 		return
@@ -149,7 +151,7 @@ func (p *Proxy) HandleConnection(conn *minecraft.Conn) {
 			var disc minecraft.DisconnectError
 
 			if ok := errors.As(err, &disc); ok {
-				fmt.Printf("%v was disconnected: %v\n", conn.ClientData().ThirdPartyName, disc.Error())
+				fmt.Printf("%v was disconnected: %v\n", conn.IdentityData().DisplayName, disc.Error())
 
 				_ = p.Listener.Disconnect(conn, disc.Error())
 			}
