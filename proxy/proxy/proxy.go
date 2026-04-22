@@ -5,6 +5,7 @@ import (
 	"fmt"
 	api "proxy/utils/API"
 	"proxy/utils/config"
+	"proxy/utils/validate"
 	"strings"
 	"sync"
 
@@ -15,8 +16,9 @@ import (
 
 func NewProxy(config config.Config, api api.API) Proxy {
 	return Proxy{
-		Config: config,
-		API:    api,
+		Config:  config,
+		API:     api,
+		Players: make(map[string]*minecraft.Conn),
 	}
 }
 
@@ -45,6 +47,8 @@ func (p *Proxy) Start() {
 }
 func (p *Proxy) HandleConnection(conn *minecraft.Conn) {
 	fmt.Printf("Incoming connection: %v\n", conn.IdentityData().DisplayName)
+
+	p.Players[conn.IdentityData().XUID] = conn
 
 	if !p.PacksDownloaded {
 		fmt.Printf("%v was disconnected: RPs are still being downloaded.\n", conn.IdentityData().DisplayName)
@@ -96,6 +100,7 @@ func (p *Proxy) HandleConnection(conn *minecraft.Conn) {
 
 	defer serverConn.Close()
 	defer p.Listener.Disconnect(conn, "Internal Error!")
+	defer delete(p.Players, conn.IdentityData().XUID)
 
 	group := sync.WaitGroup{}
 	passed := true
@@ -130,6 +135,12 @@ func (p *Proxy) HandleConnection(conn *minecraft.Conn) {
 			pk, err := conn.ReadPacket()
 
 			if err != nil {
+				return
+			}
+			if valid, reason := validate.ValidateClientPacket(conn, pk); !valid {
+				fmt.Printf("%v was disconnected: %v\n", conn.IdentityData().DisplayName, reason)
+
+				_ = p.Listener.Disconnect(conn, reason)
 				return
 			}
 			if err := serverConn.WritePacket(pk); err != nil {
